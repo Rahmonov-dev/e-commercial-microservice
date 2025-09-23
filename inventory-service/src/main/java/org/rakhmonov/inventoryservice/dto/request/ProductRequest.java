@@ -2,7 +2,6 @@ package org.rakhmonov.inventoryservice.dto.request;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
-import org.rakhmonov.inventoryservice.entity.Supplier;
 
 import java.math.BigDecimal;
 
@@ -32,8 +31,6 @@ public class ProductRequest {
     
     // Inventory fields
     private Integer currentStock;
-    private Integer minStockLevel;
-    private Integer maxStockLevel;
     private Integer reorderPoint;
     private BigDecimal unitCost;
 

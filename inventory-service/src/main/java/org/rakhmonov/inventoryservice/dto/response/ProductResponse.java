@@ -43,7 +43,36 @@ public class ProductResponse {
     }
 
     public static ProductResponse fromEntity(Product product) {
-        return null;
+        return ProductResponse.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .sku(product.getSku())
+                .barcode(product.getBarcode())
+                .imageUrl(product.getImageUrl())
+                .isActive(product.getIsActive())
+                .category(product.getCategory() != null ? 
+                    CategorySummaryResponse.builder()
+                        .id(product.getCategory().getId())
+                        .name(product.getCategory().getName())
+                        .build() : null)
+                .thirdPartySeller(product.getThirdPartySeller() != null ?
+                    ThirdPartySellerSummaryResponse.builder()
+                        .id(product.getThirdPartySeller().getId())
+                        .companyName(product.getThirdPartySeller().getCompanyName())
+                        .build() : null)
+                .inventory(product.getInventory() != null ?
+                    InventorySummaryResponse.builder()
+                        .id(product.getInventory().getId())
+                        .currentStock(product.getInventory().getCurrentStock())
+                        .reorderPoint(product.getInventory().getReorderPoint())
+                        .unitCost(product.getInventory().getUnitCost())
+                        .stockStatus(product.getInventory().getStockStatus())
+                        .build() : null)
+                .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
+                .build();
     }
 }
 

@@ -11,17 +11,15 @@ import java.math.BigDecimal;
 public class InventorySummaryResponse {
     private Long id;
     private Integer currentStock;
-    private Integer minStockLevel;
-    private Integer maxStockLevel;
     private Integer reorderPoint;
     private BigDecimal unitCost;
     private BigDecimal totalValue;
+    private String stockStatus;
     
     // Calculated fields
     public String getStockStatus() {
         if (currentStock <= 0) return "OUT_OF_STOCK";
         if (currentStock <= reorderPoint) return "LOW_STOCK";
-        if (currentStock >= maxStockLevel) return "OVERSTOCKED";
         return "IN_STOCK";
     }
     

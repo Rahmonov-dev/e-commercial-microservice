@@ -140,11 +140,7 @@ public class AuthController {
         @Parameter(description = "Refresh token to invalidate", required = true)
         @RequestBody RefreshTokenRequest request
     ) {
-        String accesToken=null;
-        if (header!=null && header.startsWith("Bearer ")) {
-            accesToken=header.substring(7);
-        }
-        authService.logout(accesToken,request);
+        authService.logout(request);
         return ResponseEntity.ok("User logged out successfully");
     }
 }

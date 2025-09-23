@@ -1,9 +1,12 @@
 package org.rakhmonov.authservice.config;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +18,8 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
+        final String securitySchemeName = "bearerAuth";
+
         return new OpenAPI()
                 .info(new Info()
                         .title("E-Commerce Auth Service API")
@@ -33,14 +38,15 @@ public class SwaggerConfig {
                                 .description("Local Development Server"),
                         new Server()
                                 .url("https://api.ecommerce.com")
-                                .description("Production Server")
-                ));
+                                .description("Production Server")))
+                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
+                .components(new Components()
+                        .addSecuritySchemes(securitySchemeName,
+                                new SecurityScheme()
+                                        .name("Authorization") // 🔑 muhim joyi
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")
+                                        .in(SecurityScheme.In.HEADER)));
     }
 }
-
-
-
-
-
-
-

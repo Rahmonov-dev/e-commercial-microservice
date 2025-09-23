@@ -22,13 +22,8 @@ public class Inventory {
     @Column(nullable = false)
     @Builder.Default
     private Integer currentStock = 0;
-    
-    @Builder.Default
-    private Integer minStockLevel = 0;
-    
-    @Builder.Default
-    private Integer maxStockLevel = 1000;
-    
+
+
     @Builder.Default
     private Integer reorderPoint = 10;
     
@@ -56,7 +51,6 @@ public class Inventory {
     public String getStockStatus() {
         if (currentStock <= 0) return "OUT_OF_STOCK";
         if (currentStock <= reorderPoint) return "LOW_STOCK";
-        if (currentStock >= maxStockLevel) return "OVERSTOCKED";
         return "IN_STOCK";
     }
     

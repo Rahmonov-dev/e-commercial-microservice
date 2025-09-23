@@ -3,7 +3,6 @@ package org.rakhmonov.inventoryservice.service;
 import lombok.RequiredArgsConstructor;
 import org.rakhmonov.inventoryservice.dto.request.InventoryRequest;
 import org.rakhmonov.inventoryservice.dto.response.InventoryResponse;
-import org.rakhmonov.inventoryservice.dto.response.ProductResponse;
 import org.rakhmonov.inventoryservice.entity.Inventory;
 import org.rakhmonov.inventoryservice.entity.Product;
 import org.rakhmonov.inventoryservice.entity.Warehouse;
@@ -36,8 +35,6 @@ public class InventoryService {
                 .orElseThrow(() -> new RuntimeException("Inventory not found"));
         Optional.ofNullable(inventoryRequest.getCurrentStock())
                 .ifPresent(inventory::setCurrentStock);
-        Optional.ofNullable(inventoryRequest.getMinStockLevel())
-                .ifPresent(inventory::setMinStockLevel);
         Optional.ofNullable(inventoryRequest.getReorderPoint())
                 .ifPresent(inventory::setReorderPoint);
         Optional.ofNullable(inventoryRequest.getUnitCost())

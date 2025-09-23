@@ -6,8 +6,12 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
+import lombok.RequiredArgsConstructor;
+import org.rakhmonov.authservice.repo.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
@@ -18,7 +22,11 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Service
-public class JWTService  {
+@RequiredArgsConstructor
+public class JWTService {
+
+    private final UserRepository userRepository;
+    private final RedisTemplate redisTemplate;
 
     @Value("${jwt.secret}")
     private String secretKey;
@@ -46,10 +54,9 @@ public class JWTService  {
     }
 
     // Role asosida refresh token
-    public String generateRefreshToken(UserDetails userDetails) {
+    public String generateRefreshToken(UserDetails userDetails, Long id) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", userDetails.getAuthorities().iterator().next().getAuthority());
-
+        claims.put("userId", id);
         long roleBasedExpiration = getRoleBasedRefreshExpiration(
                 userDetails.getAuthorities().iterator().next().getAuthority()
         );
@@ -61,7 +68,7 @@ public class JWTService  {
         return Duration.ofMillis(extractExpiration(token).getTime() - System.currentTimeMillis());
     }
 
-    private String generateToken(HashMap<String , Object> extraClaims, UserDetails userDetails) {
+    private String generateToken(HashMap<String, Object> extraClaims, UserDetails userDetails) {
         return buildToken(extraClaims, userDetails, jwtExpiration);
     }
 
@@ -81,6 +88,13 @@ public class JWTService  {
         final String phoneNumber = extractPhoneNumber(token);
         return (phoneNumber.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
+
+    public boolean isRefreshTokenValid(String token) {
+        final Long userId =extractUserIdFromRefreshToken(token);
+        String storedToken= (String) redisTemplate.opsForValue().get(userId);
+        return storedToken!=null;
+    }
+
     public String extractPhoneNumberFromRefreshToken(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -100,6 +114,10 @@ public class JWTService  {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    public Long extractUserIdFromRefreshToken(String token) {
+        return extractClaim(token, claims -> claims.get("userId", Long.class));
     }
 
     private Key getSignInKey() {

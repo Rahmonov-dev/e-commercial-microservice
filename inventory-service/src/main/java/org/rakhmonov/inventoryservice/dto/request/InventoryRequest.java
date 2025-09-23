@@ -23,12 +23,6 @@ public class InventoryRequest {
     @Min(value = 0, message = "Current stock cannot be negative")
     private Integer currentStock;
 
-    @Min(value = 0, message = "Minimum stock level cannot be negative")
-    private Integer minStockLevel;
-
-    @Min(value = 0, message = "Maximum stock level cannot be negative")
-    private Integer maxStockLevel;
-
     @Min(value = 0, message = "Reorder point cannot be negative")
     private Integer reorderPoint;
 
@@ -38,8 +32,6 @@ public class InventoryRequest {
     public static Inventory toEntity(InventoryRequest request, Product product, Warehouse warehouse) {
         return Inventory.builder()
                 .currentStock(request.getCurrentStock())
-                .minStockLevel(request.getMinStockLevel())
-                .maxStockLevel(request.getMaxStockLevel())
                 .reorderPoint(request.getReorderPoint())
                 .unitCost(request.getUnitCost())
                 .product(product)

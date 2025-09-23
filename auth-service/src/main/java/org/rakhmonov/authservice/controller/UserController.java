@@ -30,7 +30,7 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('CUSTOMER')")
     @Operation(
         summary = "Get all active users",
         description = "Retrieves list of all active users (Admin/Super Admin only)"

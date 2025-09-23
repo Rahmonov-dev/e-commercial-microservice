@@ -14,10 +14,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +28,7 @@ public class AuthService {
     private final JWTService jwtService;
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<Long, String> redisTemplate;
 
     public LoginResponse register(RegisterRequest request) {
         if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
@@ -38,7 +37,7 @@ public class AuthService {
 
         // Get default customer role
         Role customerRole = roleRepository.findByName("CUSTOMER")
-            .orElseThrow(() -> new RuntimeException("Default customer role not found"));
+                .orElseThrow(() -> new RuntimeException("Default customer role not found"));
 
         User users = User.builder()
                 .phoneNumber(request.getPhoneNumber())
@@ -55,42 +54,39 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getPhoneNumber(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(request.getPhoneNumber(), request.getPassword())
         );
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getPhoneNumber());
         User user = userRepository.findByPhoneNumber(request.getPhoneNumber()).orElseThrow();
 
         String token = jwtService.generateToken(userDetails);
-        String refreshToken = jwtService.generateRefreshToken(userDetails);
+        String refreshToken = jwtService.generateRefreshToken(userDetails, user.getId());
 
-        redisTemplate.opsForValue().set(token, userDetails, Duration.ofMinutes(10));
-        redisTemplate.opsForValue().set(refreshToken, userDetails, jwtService.getRefreshTokenExpiration(refreshToken));
+        redisTemplate.opsForValue().set(user.getId(), token, jwtService.getRefreshTokenExpiration(refreshToken));
 
         return new AuthResponse(token, refreshToken, "Login successful",
-                              user.getPhoneNumber(), user.getFirstName(), user.getLastName());
+                user.getPhoneNumber(), user.getFirstName(), user.getLastName());
     }
 
-    public AuthResponse  refreshToken(RefreshTokenRequest request) {
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
         UserDetails userDetails = userDetailsService.loadUserByUsername(
                 jwtService.extractPhoneNumberFromRefreshToken(request.getRefreshToken()));
-        if(jwtService.isTokenValid(request.getRefreshToken(), userDetails)){
-            String token = jwtService.generateToken(userDetails);
-            String refreshToken = jwtService.generateRefreshToken(userDetails);
-            redisTemplate.opsForValue().set(token, userDetails, Duration.ofMinutes(10));
-            User user = userRepository.findByPhoneNumber(userDetails.getUsername()).orElseThrow();
-            return new AuthResponse(token, refreshToken, "Token refreshed", user.getPhoneNumber(), user.getFirstName(), user.getLastName());
+        if (!jwtService.isRefreshTokenValid(request.getRefreshToken())) {
+            throw new RuntimeException("Refresh token invalid or expired");
         }
-        System.out.println(userDetails);
-        return new AuthResponse("null_refresh_token", "null_refresh_token", "Something went wrong", null, null, null);
+        String token = jwtService.generateToken(userDetails);
+        User user = userRepository.findByPhoneNumber(userDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        return new AuthResponse(token, request.getRefreshToken(), "Token refreshed",
+                user.getPhoneNumber(), user.getFirstName(), user.getLastName());
     }
 
-    public void logout(String accessToken, RefreshTokenRequest request) {
-        if (accessToken != null) {
-            redisTemplate.delete(accessToken);
-        }
+    public void logout(RefreshTokenRequest request) {
         if (request.getRefreshToken() != null) {
-            redisTemplate.delete(request.getRefreshToken());
+            Long userId = jwtService.extractUserIdFromRefreshToken(request.getRefreshToken());
+            redisTemplate.delete(userId);
         }
     }
 }

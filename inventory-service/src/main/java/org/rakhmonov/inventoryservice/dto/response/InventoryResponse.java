@@ -13,8 +13,6 @@ import java.time.LocalDateTime;
 public class InventoryResponse {
     private Long id;
     private Integer currentStock;
-    private Integer minStockLevel;
-    private Integer maxStockLevel;
     private Integer reorderPoint;
     private BigDecimal unitCost;
     private BigDecimal totalValue;
@@ -29,8 +27,6 @@ public class InventoryResponse {
         return InventoryResponse.builder()
                 .id(entity.getId())
                 .currentStock(entity.getCurrentStock())
-                .minStockLevel(entity.getMinStockLevel())
-                .maxStockLevel(entity.getMaxStockLevel())
                 .reorderPoint(entity.getReorderPoint())
                 .unitCost(entity.getUnitCost())
                 .stockStatus(entity.getStockStatus())

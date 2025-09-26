@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.rakhmonov.paymentservice.config.ClickConfig;
 import org.rakhmonov.paymentservice.dto.request.ClickPaymentRequest;
-import org.rakhmonov.paymentservice.entity.ClickPayment;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -13,7 +12,6 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -26,124 +24,160 @@ public class ClickApiService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     /**
-     * Prepare payment with Click.uz
+     * Create invoice with Click.uz API
      */
-    public Map<String, Object> preparePayment(ClickPaymentRequest request) {
-        log.info("Preparing Click payment for order: {}", request.getOrderId());
+    public Map<String, Object> createInvoice(ClickPaymentRequest request, String phoneNumber) {
+        log.info("Creating Click invoice for order: {}", request.getOrderId());
         
         String merchantTransId = "MERCHANT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        String signString = generateSignString(merchantTransId, request.getAmount(), request.getCurrency());
         
-        Map<String, Object> prepareData = new HashMap<>();
-        prepareData.put("service_id", clickConfig.getServiceId());
-        prepareData.put("merchant_trans_id", merchantTransId);
-        prepareData.put("amount", request.getAmount());
-        prepareData.put("currency", request.getCurrency());
-        prepareData.put("action", "prepare");
-        prepareData.put("sign_string", signString);
-        prepareData.put("sign_time", String.valueOf(System.currentTimeMillis()));
+        Map<String, Object> invoiceData = new HashMap<>();
+        invoiceData.put("service_id", clickConfig.getServiceId());
+        invoiceData.put("amount", request.getAmount());
+        invoiceData.put("phone_number", phoneNumber);
+        invoiceData.put("merchant_trans_id", merchantTransId);
         
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpHeaders headers = createAuthHeaders();
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(invoiceData, headers);
             
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(prepareData, headers);
             ResponseEntity<Map> response = restTemplate.postForEntity(
-                clickConfig.getApiUrl() + "/payment/prepare", 
+                clickConfig.getApiUrl() + "/invoice/create", 
                 entity, 
                 Map.class
             );
             
             if (response.getStatusCode() == HttpStatus.OK) {
-                Map<String, Object> responseBody = response.getBody();
-                log.info("Click payment prepared successfully: {}", responseBody);
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
+                log.info("Click invoice created successfully: {}", responseBody);
                 return responseBody;
             } else {
-                log.error("Failed to prepare Click payment. Status: {}", response.getStatusCode());
-                throw new RuntimeException("Failed to prepare Click payment");
+                log.error("Failed to create Click invoice. Status: {}", response.getStatusCode());
+                throw new RuntimeException("Failed to create Click invoice");
             }
         } catch (Exception e) {
-            log.error("Error preparing Click payment", e);
-            throw new RuntimeException("Error preparing Click payment: " + e.getMessage());
+            log.error("Error creating Click invoice", e);
+            throw new RuntimeException("Error creating Click invoice: " + e.getMessage());
         }
     }
 
     /**
-     * Complete payment with Click.uz
+     * Check invoice status
      */
-    public Map<String, Object> completePayment(String clickTransId, String merchantTransId, 
-                                               BigDecimal amount, String currency) {
-        log.info("Completing Click payment: {}", clickTransId);
-        
-        String signString = generateSignString(merchantTransId, amount, currency);
-        
-        Map<String, Object> completeData = new HashMap<>();
-        completeData.put("service_id", clickConfig.getServiceId());
-        completeData.put("click_trans_id", clickTransId);
-        completeData.put("merchant_trans_id", merchantTransId);
-        completeData.put("amount", amount);
-        completeData.put("currency", currency);
-        completeData.put("action", "complete");
-        completeData.put("sign_string", signString);
-        completeData.put("sign_time", String.valueOf(System.currentTimeMillis()));
+    public Map<String, Object> checkInvoiceStatus(Integer invoiceId) {
+        log.info("Checking Click invoice status for ID: {}", invoiceId);
         
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpHeaders headers = createAuthHeaders();
+            HttpEntity<String> entity = new HttpEntity<>(headers);
             
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(completeData, headers);
-            ResponseEntity<Map> response = restTemplate.postForEntity(
-                clickConfig.getApiUrl() + "/payment/complete", 
-                entity, 
+            ResponseEntity<Map> response = restTemplate.exchange(
+                clickConfig.getApiUrl() + "/invoice/status/" + clickConfig.getServiceId() + "/" + invoiceId,
+                HttpMethod.GET,
+                entity,
                 Map.class
             );
             
             if (response.getStatusCode() == HttpStatus.OK) {
-                Map<String, Object> responseBody = response.getBody();
-                log.info("Click payment completed successfully: {}", responseBody);
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
+                log.info("Click invoice status retrieved: {}", responseBody);
                 return responseBody;
             } else {
-                log.error("Failed to complete Click payment. Status: {}", response.getStatusCode());
-                throw new RuntimeException("Failed to complete Click payment");
+                log.error("Failed to check Click invoice status. Status: {}", response.getStatusCode());
+                throw new RuntimeException("Failed to check Click invoice status");
             }
         } catch (Exception e) {
-            log.error("Error completing Click payment", e);
-            throw new RuntimeException("Error completing Click payment: " + e.getMessage());
+            log.error("Error checking Click invoice status", e);
+            throw new RuntimeException("Error checking Click invoice status: " + e.getMessage());
         }
     }
 
     /**
-     * Cancel payment with Click.uz
+     * Check payment status
      */
-    public Map<String, Object> cancelPayment(String clickTransId, String merchantTransId, 
-                                             BigDecimal amount, String currency) {
-        log.info("Cancelling Click payment: {}", clickTransId);
-        
-        String signString = generateSignString(merchantTransId, amount, currency);
-        
-        Map<String, Object> cancelData = new HashMap<>();
-        cancelData.put("service_id", clickConfig.getServiceId());
-        cancelData.put("click_trans_id", clickTransId);
-        cancelData.put("merchant_trans_id", merchantTransId);
-        cancelData.put("amount", amount);
-        cancelData.put("currency", currency);
-        cancelData.put("action", "cancel");
-        cancelData.put("sign_string", signString);
-        cancelData.put("sign_time", String.valueOf(System.currentTimeMillis()));
+    public Map<String, Object> checkPaymentStatus(Long paymentId) {
+        log.info("Checking Click payment status for ID: {}", paymentId);
         
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpHeaders headers = createAuthHeaders();
+            HttpEntity<String> entity = new HttpEntity<>(headers);
             
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(cancelData, headers);
-            ResponseEntity<Map> response = restTemplate.postForEntity(
-                clickConfig.getApiUrl() + "/payment/cancel", 
-                entity, 
+            ResponseEntity<Map> response = restTemplate.exchange(
+                clickConfig.getApiUrl() + "/payment/status/" + clickConfig.getServiceId() + "/" + paymentId,
+                HttpMethod.GET,
+                entity,
                 Map.class
             );
             
             if (response.getStatusCode() == HttpStatus.OK) {
-                Map<String, Object> responseBody = response.getBody();
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
+                log.info("Click payment status retrieved: {}", responseBody);
+                return responseBody;
+            } else {
+                log.error("Failed to check Click payment status. Status: {}", response.getStatusCode());
+                throw new RuntimeException("Failed to check Click payment status");
+            }
+        } catch (Exception e) {
+            log.error("Error checking Click payment status", e);
+            throw new RuntimeException("Error checking Click payment status: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Check payment status by merchant transaction ID
+     */
+    public Map<String, Object> checkPaymentStatusByMerchantTransId(String merchantTransId, String date) {
+        log.info("Checking Click payment status by merchant trans ID: {}", merchantTransId);
+        
+        try {
+            HttpHeaders headers = createAuthHeaders();
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            
+            ResponseEntity<Map> response = restTemplate.exchange(
+                clickConfig.getApiUrl() + "/payment/status_by_mti/" + clickConfig.getServiceId() + "/" + merchantTransId + "/" + date,
+                HttpMethod.GET,
+                entity,
+                Map.class
+            );
+            
+            if (response.getStatusCode() == HttpStatus.OK) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
+                log.info("Click payment status by merchant trans ID retrieved: {}", responseBody);
+                return responseBody;
+            } else {
+                log.error("Failed to check Click payment status by merchant trans ID. Status: {}", response.getStatusCode());
+                throw new RuntimeException("Failed to check Click payment status by merchant trans ID");
+            }
+        } catch (Exception e) {
+            log.error("Error checking Click payment status by merchant trans ID", e);
+            throw new RuntimeException("Error checking Click payment status by merchant trans ID: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Cancel payment (reversal)
+     */
+    public Map<String, Object> cancelPayment(Long paymentId) {
+        log.info("Cancelling Click payment: {}", paymentId);
+        
+        try {
+            HttpHeaders headers = createAuthHeaders();
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            
+            ResponseEntity<Map> response = restTemplate.exchange(
+                clickConfig.getApiUrl() + "/payment/reversal/" + clickConfig.getServiceId() + "/" + paymentId,
+                HttpMethod.DELETE,
+                entity,
+                Map.class
+            );
+            
+            if (response.getStatusCode() == HttpStatus.OK) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
                 log.info("Click payment cancelled successfully: {}", responseBody);
                 return responseBody;
             } else {
@@ -157,64 +191,176 @@ public class ClickApiService {
     }
 
     /**
-     * Generate payment URL for redirect
+     * Create card token
      */
-    public String generatePaymentUrl(String clickTransId, BigDecimal amount, String currency, 
-                                   String description, Long orderId) {
-        log.info("Generating Click payment URL for order: {}", orderId);
+    public Map<String, Object> createCardToken(String cardNumber, String expireDate, Boolean temporary) {
+        log.info("Creating Click card token");
         
-        Map<String, String> params = new HashMap<>();
-        params.put("service_id", clickConfig.getServiceId());
-        params.put("merchant_id", clickConfig.getMerchantId());
-        params.put("amount", amount.toString());
-        params.put("currency", currency);
-        params.put("description", description);
-        params.put("click_trans_id", clickTransId);
-        params.put("return_url", clickConfig.getReturnUrl());
-        params.put("callback_url", clickConfig.getCallbackUrl());
+        Map<String, Object> tokenData = new HashMap<>();
+        tokenData.put("service_id", clickConfig.getServiceId());
+        tokenData.put("card_number", cardNumber);
+        tokenData.put("expire_date", expireDate);
+        tokenData.put("temporary", temporary ? 1 : 0);
         
-        StringBuilder urlBuilder = new StringBuilder(clickConfig.getBaseUrl());
-        urlBuilder.append("?");
-        
-        params.forEach((key, value) -> {
-            urlBuilder.append(key).append("=").append(value).append("&");
-        });
-        
-        String paymentUrl = urlBuilder.toString();
-        log.info("Generated Click payment URL: {}", paymentUrl);
-        
-        return paymentUrl;
-    }
-
-    /**
-     * Verify webhook signature
-     */
-    public boolean verifyWebhookSignature(Map<String, String> webhookData) {
         try {
-            String receivedSign = webhookData.get("sign_string");
-            String merchantTransId = webhookData.get("merchant_trans_id");
-            String amount = webhookData.get("amount");
-            String currency = webhookData.get("currency");
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Accept", "application/json");
             
-            String expectedSign = generateSignString(merchantTransId, new BigDecimal(amount), currency);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(tokenData, headers);
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                clickConfig.getApiUrl() + "/card_token/request", 
+                entity, 
+                Map.class
+            );
             
-            boolean isValid = receivedSign.equals(expectedSign);
-            log.info("Webhook signature verification: {}", isValid);
-            
-            return isValid;
+            if (response.getStatusCode() == HttpStatus.OK) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
+                log.info("Click card token created successfully: {}", responseBody);
+                return responseBody;
+            } else {
+                log.error("Failed to create Click card token. Status: {}", response.getStatusCode());
+                throw new RuntimeException("Failed to create Click card token");
+            }
         } catch (Exception e) {
-            log.error("Error verifying webhook signature", e);
-            return false;
+            log.error("Error creating Click card token", e);
+            throw new RuntimeException("Error creating Click card token: " + e.getMessage());
         }
     }
 
     /**
-     * Generate sign string for Click.uz API
+     * Verify card token
      */
-    private String generateSignString(String merchantTransId, BigDecimal amount, String currency) {
+    public Map<String, Object> verifyCardToken(String cardToken, String smsCode) {
+        log.info("Verifying Click card token");
+        
+        Map<String, Object> verifyData = new HashMap<>();
+        verifyData.put("service_id", clickConfig.getServiceId());
+        verifyData.put("card_token", cardToken);
+        verifyData.put("sms_code", smsCode);
+        
         try {
-            String data = merchantTransId + amount + currency + clickConfig.getSecretKey();
-            MessageDigest md = MessageDigest.getInstance("SHA256");
+            HttpHeaders headers = createAuthHeaders();
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(verifyData, headers);
+            
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                clickConfig.getApiUrl() + "/card_token/verify", 
+                entity, 
+                Map.class
+            );
+            
+            if (response.getStatusCode() == HttpStatus.OK) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
+                log.info("Click card token verified successfully: {}", responseBody);
+                return responseBody;
+            } else {
+                log.error("Failed to verify Click card token. Status: {}", response.getStatusCode());
+                throw new RuntimeException("Failed to verify Click card token");
+            }
+        } catch (Exception e) {
+            log.error("Error verifying Click card token", e);
+            throw new RuntimeException("Error verifying Click card token: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Payment with token
+     */
+    public Map<String, Object> paymentWithToken(String cardToken, BigDecimal amount, String merchantTransId) {
+        log.info("Processing Click payment with token");
+        
+        Map<String, Object> paymentData = new HashMap<>();
+        paymentData.put("service_id", clickConfig.getServiceId());
+        paymentData.put("card_token", cardToken);
+        paymentData.put("amount", amount);
+        paymentData.put("transaction_parameter", merchantTransId);
+        
+        try {
+            HttpHeaders headers = createAuthHeaders();
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(paymentData, headers);
+            
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                clickConfig.getApiUrl() + "/card_token/payment", 
+                entity, 
+                Map.class
+            );
+            
+            if (response.getStatusCode() == HttpStatus.OK) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
+                log.info("Click payment with token completed successfully: {}", responseBody);
+                return responseBody;
+            } else {
+                log.error("Failed to process Click payment with token. Status: {}", response.getStatusCode());
+                throw new RuntimeException("Failed to process Click payment with token");
+            }
+        } catch (Exception e) {
+            log.error("Error processing Click payment with token", e);
+            throw new RuntimeException("Error processing Click payment with token: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Delete card token
+     */
+    public Map<String, Object> deleteCardToken(String cardToken) {
+        log.info("Deleting Click card token");
+        
+        try {
+            HttpHeaders headers = createAuthHeaders();
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            
+            ResponseEntity<Map> response = restTemplate.exchange(
+                clickConfig.getApiUrl() + "/card_token/" + clickConfig.getServiceId() + "/" + cardToken,
+                HttpMethod.DELETE,
+                entity,
+                Map.class
+            );
+            
+            if (response.getStatusCode() == HttpStatus.OK) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
+                log.info("Click card token deleted successfully: {}", responseBody);
+                return responseBody;
+            } else {
+                log.error("Failed to delete Click card token. Status: {}", response.getStatusCode());
+                throw new RuntimeException("Failed to delete Click card token");
+            }
+        } catch (Exception e) {
+            log.error("Error deleting Click card token", e);
+            throw new RuntimeException("Error deleting Click card token: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Create authentication headers for Click.uz API
+     */
+    private HttpHeaders createAuthHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Accept", "application/json");
+        
+        // Generate timestamp
+        long timestamp = System.currentTimeMillis() / 1000;
+        
+        // Generate digest: sha1(timestamp + secret_key)
+        String digest = generateDigest(timestamp + clickConfig.getSecretKey());
+        
+        // Create Auth header: merchant_user_id:digest:timestamp
+        String authHeader = clickConfig.getMerchantUserId() + ":" + digest + ":" + timestamp;
+        headers.set("Auth", authHeader);
+        
+        return headers;
+    }
+
+    /**
+     * Generate SHA1 digest
+     */
+    private String generateDigest(String data) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
             byte[] hash = md.digest(data.getBytes(StandardCharsets.UTF_8));
             
             StringBuilder hexString = new StringBuilder();
@@ -228,9 +374,8 @@ public class ClickApiService {
             
             return hexString.toString();
         } catch (NoSuchAlgorithmException e) {
-            log.error("Error generating sign string", e);
-            throw new RuntimeException("Error generating sign string", e);
+            log.error("Error generating SHA1 digest", e);
+            throw new RuntimeException("Error generating SHA1 digest", e);
         }
     }
 }
-

@@ -18,8 +18,10 @@ import java.security.Key;
 import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -49,7 +51,13 @@ public class JWTService {
     // Access token
     public String generateToken(UserDetails userDetails) {
         HashMap<String, Object> claims = new HashMap<>();
-        claims.put("role", userDetails.getAuthorities().iterator().next().getAuthority());
+        
+        // Get all authorities (roles + permissions)
+        List<String> authorities = userDetails.getAuthorities().stream()
+                .map(authority -> authority.getAuthority())
+                .collect(Collectors.toList());
+        
+        claims.put("authorities", authorities);
         return generateToken(claims, userDetails);
     }
 

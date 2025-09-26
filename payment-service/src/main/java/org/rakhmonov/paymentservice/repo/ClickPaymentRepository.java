@@ -12,24 +12,25 @@ import java.util.Optional;
 
 @Repository
 public interface ClickPaymentRepository extends JpaRepository<ClickPayment, Long> {
-    Optional<ClickPayment> findByClickTransId(String clickTransId);
+    Optional<ClickPayment> findByInvoiceId(Long invoiceId);
+    Optional<ClickPayment> findByPaymentId(Long paymentId);
     Optional<ClickPayment> findByMerchantTransId(String merchantTransId);
     List<ClickPayment> findByOrderId(Long orderId);
     List<ClickPayment> findByUserId(Long userId);
-    List<ClickPayment> findByStatus(ClickPayment.PaymentStatus status);
-    Optional<ClickPayment> findByPrepareId(String prepareId);
+    List<ClickPayment> findByPhoneNumber(String phoneNumber);
+    List<ClickPayment> findByCardToken(String cardToken);
     List<ClickPayment> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 
-    @Query("SELECT cp FROM ClickPayment cp WHERE cp.userId = :userId AND cp.status = :status")
-    List<ClickPayment> findByUserIdAndStatus(@Param("userId") Long userId, @Param("status") ClickPayment.PaymentStatus status);
+    @Query("SELECT cp FROM ClickPayment cp WHERE cp.userId = :userId AND cp.paymentStatus = :paymentStatus")
+    List<ClickPayment> findByUserIdAndPaymentStatus(@Param("userId") Long userId, @Param("paymentStatus") Integer paymentStatus);
 
-    @Query("SELECT cp FROM ClickPayment cp WHERE cp.orderId = :orderId AND cp.status = :status")
-    List<ClickPayment> findByOrderIdAndStatus(@Param("orderId") Long orderId, @Param("status") ClickPayment.PaymentStatus status);
+    @Query("SELECT cp FROM ClickPayment cp WHERE cp.orderId = :orderId AND cp.paymentStatus = :paymentStatus")
+    List<ClickPayment> findByOrderIdAndPaymentStatus(@Param("orderId") Long orderId, @Param("paymentStatus") Integer paymentStatus);
 
-    @Query("SELECT cp FROM ClickPayment cp WHERE cp.status = :status AND cp.createdAt BETWEEN :startDate AND :endDate")
-    List<ClickPayment> findByStatusAndDateRange(@Param("status") ClickPayment.PaymentStatus status,
-                                                @Param("startDate") LocalDateTime startDate,
-                                                @Param("endDate") LocalDateTime endDate);
+    @Query("SELECT cp FROM ClickPayment cp WHERE cp.paymentStatus = :paymentStatus AND cp.createdAt BETWEEN :startDate AND :endDate")
+    List<ClickPayment> findByPaymentStatusAndDateRange(@Param("paymentStatus") Integer paymentStatus,
+                                                        @Param("startDate") LocalDateTime startDate,
+                                                        @Param("endDate") LocalDateTime endDate);
 
     List<ClickPayment> findByUserIdOrderByCreatedAtDesc(Long userId);
 }

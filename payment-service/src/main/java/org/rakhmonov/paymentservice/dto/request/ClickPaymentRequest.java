@@ -29,6 +29,7 @@ public class ClickPaymentRequest {
 
     @NotBlank(message = "Currency is required")
     @Size(min = 3, max = 3, message = "Currency must be 3 characters")
+    @Builder.Default
     private String currency = "UZS";
 
     @NotBlank(message = "Description is required")

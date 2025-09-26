@@ -26,13 +26,11 @@ public class ClickPaymentService {
         log.info("Creating Click payment for order: {}", request.getOrderId());
         
         ClickPayment payment = ClickPayment.builder()
-                .clickTransId("CLICK-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .merchantTransId("MERCHANT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .orderId(request.getOrderId())
                 .userId(request.getUserId())
                 .amount(request.getAmount())
                 .currency(request.getCurrency())
-                .status(ClickPayment.PaymentStatus.PENDING)
                 .description(request.getDescription())
                 .metadata(request.getMetadata())
                 .createdAt(LocalDateTime.now())
@@ -50,8 +48,8 @@ public class ClickPaymentService {
                 .map(ClickPaymentResponse::fromEntity);
     }
 
-    public Optional<ClickPaymentResponse> getPaymentByClickTransId(String clickTransId) {
-        return clickPaymentRepository.findByClickTransId(clickTransId)
+    public Optional<ClickPaymentResponse> getPaymentByInvoiceId(Long invoiceId) {
+        return clickPaymentRepository.findByInvoiceId(invoiceId)
                 .map(ClickPaymentResponse::fromEntity);
     }
 
@@ -78,76 +76,57 @@ public class ClickPaymentService {
                 .collect(Collectors.toList());
     }
 
-    public List<ClickPaymentResponse> getPaymentsByStatus(ClickPayment.PaymentStatus status) {
-        return clickPaymentRepository.findByStatus(status).stream()
+    public List<ClickPaymentResponse> getPaymentsByPaymentStatus(Integer paymentStatus) {
+        return clickPaymentRepository.findByPaymentStatusAndDateRange(paymentStatus, 
+                LocalDateTime.now().minusDays(30), LocalDateTime.now()).stream()
                 .map(ClickPaymentResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public ClickPaymentResponse updatePaymentStatus(Long id, ClickPayment.PaymentStatus newStatus) {
+    public ClickPaymentResponse updatePaymentStatus(Long id, Integer newPaymentStatus) {
         ClickPayment payment = clickPaymentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Click payment not found with id: " + id));
         
-        payment.setStatus(newStatus);
+        payment.setPaymentStatus(newPaymentStatus);
         payment.setUpdatedAt(LocalDateTime.now());
         
-        if (newStatus == ClickPayment.PaymentStatus.CONFIRMED) {
+        if (newPaymentStatus == 2) { // SUCCESSFUL
             payment.setProcessedAt(LocalDateTime.now());
         }
         
         ClickPayment savedPayment = clickPaymentRepository.save(payment);
-        log.info("Click payment status updated to: {} for payment ID: {}", newStatus, id);
+        log.info("Click payment status updated to: {} for payment ID: {}", newPaymentStatus, id);
         
         return ClickPaymentResponse.fromEntity(savedPayment);
     }
 
     @Transactional
-    public ClickPaymentResponse preparePayment(Long id, String prepareId) {
+    public ClickPaymentResponse updateInvoiceStatus(Long id, Long invoiceId, String invoiceStatusNote) {
         ClickPayment payment = clickPaymentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Click payment not found with id: " + id));
         
-        payment.setStatus(ClickPayment.PaymentStatus.PREPARED);
-        payment.setPrepareId(prepareId);
-        payment.setAction("prepare");
+        payment.setInvoiceId(invoiceId);
+        payment.setInvoiceStatusNote(invoiceStatusNote);
         payment.setUpdatedAt(LocalDateTime.now());
         
         ClickPayment savedPayment = clickPaymentRepository.save(payment);
-        log.info("Click payment prepared with prepare ID: {}", prepareId);
+        log.info("Click payment invoice ID updated to: {} for payment ID: {}", invoiceId, id);
         
         return ClickPaymentResponse.fromEntity(savedPayment);
     }
 
     @Transactional
-    public ClickPaymentResponse confirmPayment(Long id, String merchantConfirmId) {
+    public ClickPaymentResponse updateError(Long id, Integer errorCode, String errorNote) {
         ClickPayment payment = clickPaymentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Click payment not found with id: " + id));
         
-        payment.setStatus(ClickPayment.PaymentStatus.CONFIRMED);
-        payment.setMerchantConfirmId(merchantConfirmId);
-        payment.setAction("confirm");
-        payment.setProcessedAt(LocalDateTime.now());
-        payment.setUpdatedAt(LocalDateTime.now());
-        
-        ClickPayment savedPayment = clickPaymentRepository.save(payment);
-        log.info("Click payment confirmed with merchant confirm ID: {}", merchantConfirmId);
-        
-        return ClickPaymentResponse.fromEntity(savedPayment);
-    }
-
-    @Transactional
-    public ClickPaymentResponse cancelPayment(Long id, String error, String errorNote) {
-        ClickPayment payment = clickPaymentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Click payment not found with id: " + id));
-        
-        payment.setStatus(ClickPayment.PaymentStatus.CANCELLED);
-        payment.setError(error);
+        payment.setErrorCode(errorCode);
         payment.setErrorNote(errorNote);
-        payment.setAction("cancel");
         payment.setUpdatedAt(LocalDateTime.now());
         
         ClickPayment savedPayment = clickPaymentRepository.save(payment);
-        log.info("Click payment cancelled with error: {}", error);
+        log.info("Click payment error updated: {} for payment ID: {}", errorCode, id);
         
         return ClickPaymentResponse.fromEntity(savedPayment);
     }

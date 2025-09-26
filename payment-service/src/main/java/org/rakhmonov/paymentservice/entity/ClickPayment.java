@@ -23,8 +23,11 @@ public class ClickPayment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "click_trans_id", unique = true, nullable = false)
-    private String clickTransId;
+    @Column(name = "invoice_id")
+    private Long invoiceId;
+
+    @Column(name = "payment_id")
+    private Long paymentId;
 
     @Column(name = "merchant_trans_id", unique = true, nullable = false)
     private String merchantTransId;
@@ -35,42 +38,39 @@ public class ClickPayment {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
+
     @Column(name = "amount", precision = 10, scale = 2, nullable = false)
     private BigDecimal amount;
 
     @Column(name = "currency", length = 3, nullable = false)
+    @Builder.Default
     private String currency = "UZS";
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private PaymentStatus status = PaymentStatus.PENDING;
-
-    @Column(name = "click_paydoc_id")
-    private String clickPaydocId;
-
-    @Column(name = "sign_string")
-    private String signString;
-
-    @Column(name = "sign_time")
-    private String signTime;
-
-    @Column(name = "error", length = 4)
-    private String error;
+    @Column(name = "error_code")
+    private Integer errorCode;
 
     @Column(name = "error_note", columnDefinition = "TEXT")
     private String errorNote;
 
-    @Column(name = "prepare_id")
-    private String prepareId;
+    @Column(name = "invoice_status")
+    private Integer invoiceStatus;
 
-    @Column(name = "action", length = 10)
-    private String action;
+    @Column(name = "invoice_status_note")
+    private String invoiceStatusNote;
 
-    @Column(name = "merchant_prepare_id")
-    private String merchantPrepareId;
+    @Column(name = "payment_status")
+    private Integer paymentStatus;
 
-    @Column(name = "merchant_confirm_id")
-    private String merchantConfirmId;
+    @Column(name = "card_token")
+    private String cardToken;
+
+    @Column(name = "card_number", length = 50)
+    private String cardNumber;
+
+    @Column(name = "temporary")
+    private Boolean temporary;
 
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
@@ -93,7 +93,31 @@ public class ClickPayment {
     private LocalDateTime updatedAt;
 
     public enum PaymentStatus {
-        PENDING, PREPARED, CONFIRMED, CANCELLED, REJECTED, ERROR
+        PENDING(0),
+        PROCESSING(1),
+        SUCCESSFUL(2),
+        CANCELLED(-1),
+        REJECTED(-2),
+        ERROR(-3);
+
+        private final int code;
+
+        PaymentStatus(int code) {
+            this.code = code;
+        }
+
+        public int getCode() {
+            return code;
+        }
+
+        public static PaymentStatus fromCode(int code) {
+            for (PaymentStatus status : values()) {
+                if (status.code == code) {
+                    return status;
+                }
+            }
+            return ERROR;
+        }
     }
 }
 

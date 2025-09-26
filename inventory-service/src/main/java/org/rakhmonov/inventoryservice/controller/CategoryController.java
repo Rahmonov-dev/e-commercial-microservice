@@ -15,6 +15,11 @@ import java.util.List;
 public class CategoryController {
     private final CategoryService categoryService;
 
+    @GetMapping("/test")
+    public String test(){
+        return  "Security is working ";
+    }
+
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(@RequestBody CategoryRequest category) {
         return ResponseEntity.ok(categoryService.createCategory(category));

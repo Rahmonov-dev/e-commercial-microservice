@@ -8,14 +8,11 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "click")
 @Data
 public class ClickConfig {
-    private String merchantId;
-    private String serviceId;
+    private Integer merchantId;
+    private Integer serviceId;
+    private String merchantUserId;
     private String secretKey;
-    private String prepareUrl;
-    private String completeUrl;
-    private String cancelUrl;
-    private String baseUrl = "https://my.click.uz/services/pay";
-    private String apiUrl = "https://api.click.uz/v2";
+    private String apiUrl = "https://api.click.uz/v2/merchant";
     private String webhookUrl;
     private String returnUrl;
     private String callbackUrl;

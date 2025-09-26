@@ -16,20 +16,22 @@ import java.util.Map;
 @Builder
 public class ClickPaymentResponse {
     private Long id;
-    private String clickTransId;
+    private Long invoiceId;
+    private Long paymentId;
     private String merchantTransId;
     private Long orderId;
     private Long userId;
+    private String phoneNumber;
     private BigDecimal amount;
     private String currency;
-    private ClickPayment.PaymentStatus status;
-    private String clickPaydocId;
-    private String error;
+    private Integer errorCode;
     private String errorNote;
-    private String prepareId;
-    private String action;
-    private String merchantPrepareId;
-    private String merchantConfirmId;
+    private Integer invoiceStatus;
+    private String invoiceStatusNote;
+    private Integer paymentStatus;
+    private String cardToken;
+    private String cardNumber;
+    private Boolean temporary;
     private LocalDateTime processedAt;
     private String description;
     private Map<String, String> metadata;
@@ -39,20 +41,22 @@ public class ClickPaymentResponse {
     public static ClickPaymentResponse fromEntity(ClickPayment payment) {
         return ClickPaymentResponse.builder()
                 .id(payment.getId())
-                .clickTransId(payment.getClickTransId())
+                .invoiceId(payment.getInvoiceId())
+                .paymentId(payment.getPaymentId())
                 .merchantTransId(payment.getMerchantTransId())
                 .orderId(payment.getOrderId())
                 .userId(payment.getUserId())
+                .phoneNumber(payment.getPhoneNumber())
                 .amount(payment.getAmount())
                 .currency(payment.getCurrency())
-                .status(payment.getStatus())
-                .clickPaydocId(payment.getClickPaydocId())
-                .error(payment.getError())
+                .errorCode(payment.getErrorCode())
                 .errorNote(payment.getErrorNote())
-                .prepareId(payment.getPrepareId())
-                .action(payment.getAction())
-                .merchantPrepareId(payment.getMerchantPrepareId())
-                .merchantConfirmId(payment.getMerchantConfirmId())
+                .invoiceStatus(payment.getInvoiceStatus())
+                .invoiceStatusNote(payment.getInvoiceStatusNote())
+                .paymentStatus(payment.getPaymentStatus())
+                .cardToken(payment.getCardToken())
+                .cardNumber(payment.getCardNumber())
+                .temporary(payment.getTemporary())
                 .processedAt(payment.getProcessedAt())
                 .description(payment.getDescription())
                 .metadata(payment.getMetadata())

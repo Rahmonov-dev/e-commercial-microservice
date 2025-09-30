@@ -33,6 +33,18 @@ public class JWTService {
     @Value("${jwt.secret}")
     private String secretKey;
 
+    public void setSecretKey(String secretKey) {
+        this.secretKey = secretKey;
+    }
+
+    public void setJwtExpiration(long jwtExpiration) {
+        this.jwtExpiration = jwtExpiration;
+    }
+
+    public void setRefreshExpiration(long refreshExpiration) {
+        this.refreshExpiration = refreshExpiration;
+    }
+
     @Value("${jwt.expiration}")
     private long jwtExpiration; // Access token uchun umumiy
 
@@ -134,7 +146,7 @@ public class JWTService {
     }
 
     // Rolega qarab refresh expiry
-    private long getRoleBasedRefreshExpiration(String role) {
+    public long getRoleBasedRefreshExpiration(String role) {
         switch (role) {
             case "ROLE_ADMIN":
                 return 1000 * 60 * 60 * 24; // 1 kun

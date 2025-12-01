@@ -315,4 +315,42 @@ public class UserController {
         userService.deleteUser(id);
         return ResponseEntity.ok("User deleted successfully");
     }
+
+    @PutMapping("/me/become-seller")
+    @Operation(
+        summary = "Become a seller",
+        description = "Change current user's role to SELLER (authenticated users only)"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Role updated to SELLER successfully",
+            content = @Content(schema = @Schema(implementation = UserResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "User or SELLER role not found"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Unauthorized - authentication required"
+        )
+    })
+    public ResponseEntity<UserResponse> becomeSeller(Authentication authentication) {
+        // Get userId from UserDetails (User entity)
+        Long userId = getUserIdFromAuthentication(authentication);
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        UserResponse user = userService.becomeSeller(userId);
+        return ResponseEntity.ok(user);
+    }
+    
+    private Long getUserIdFromAuthentication(Authentication authentication) {
+        if (authentication != null && authentication.getPrincipal() instanceof User user) {
+            return user.getId();
+        }
+        return null;
+    }
 }

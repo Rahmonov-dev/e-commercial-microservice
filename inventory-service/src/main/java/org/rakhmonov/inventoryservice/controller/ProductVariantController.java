@@ -8,6 +8,7 @@ import org.rakhmonov.inventoryservice.dto.response.ProductVariantResponse;
 import org.rakhmonov.inventoryservice.service.ProductVariantService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -52,6 +53,7 @@ public class ProductVariantController {
     }
 
     @DeleteMapping("/{variantId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     public ResponseEntity<Void> deleteProductVariant(
             @PathVariable Long productId,
             @PathVariable Long variantId) {

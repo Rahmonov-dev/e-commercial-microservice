@@ -31,8 +31,6 @@ public class CartService {
         Cart cart = Cart.builder()
                 .userId(userId)
                 .totalAmount(BigDecimal.ZERO)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
                 .build();
 
         Cart savedCart = cartRepository.save(cart);
@@ -79,8 +77,10 @@ public class CartService {
         Cart cart = cartRepository.findById(id)
                 .orElseThrow(() -> new CartNotFoundException(id));
         
-        cartRepository.delete(cart);
-        log.info("Cart deleted with ID: {}", id);
+        // Soft delete
+        cart.setIsDeleted(true);
+        cartRepository.save(cart);
+        log.info("Cart soft deleted with ID: {}", id);
     }
 
     @Transactional

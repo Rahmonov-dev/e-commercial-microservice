@@ -22,8 +22,11 @@ public class ProductResponse {
     
     // Related entities (simplified)
     private CategorySummaryResponse category;
-    private ThirdPartySellerSummaryResponse thirdPartySeller;
     private InventorySummaryResponse inventory;
+    
+    // Foreign keys to other services
+    private Long thirdPartySellerId; // Reference to User Service
+    private Long supplierId; // Reference to User Service
     
     // Timestamps
     private LocalDateTime createdAt;
@@ -57,11 +60,8 @@ public class ProductResponse {
                         .id(product.getCategory().getId())
                         .name(product.getCategory().getName())
                         .build() : null)
-                .thirdPartySeller(product.getThirdPartySeller() != null ?
-                    ThirdPartySellerSummaryResponse.builder()
-                        .id(product.getThirdPartySeller().getId())
-                        .companyName(product.getThirdPartySeller().getCompanyName())
-                        .build() : null)
+                .thirdPartySellerId(product.getThirdPartySellerId())
+                .supplierId(product.getSupplierId())
                 .inventory(product.getInventory() != null ?
                     InventorySummaryResponse.builder()
                         .id(product.getInventory().getId())

@@ -18,7 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"permissions"}) // Exclude permissions from toString to prevent circular reference
+@ToString(exclude = {"permissions"})
 public class Role implements GrantedAuthority {
 
     @Id
@@ -56,7 +56,7 @@ public class Role implements GrantedAuthority {
         joinColumns = @JoinColumn(name = "role_id"),
         inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
-    @JsonIgnoreProperties({"roles"}) // Prevent circular reference
+    @JsonIgnoreProperties({"roles"})
     private List<Permission> permissions;
 
     @Override

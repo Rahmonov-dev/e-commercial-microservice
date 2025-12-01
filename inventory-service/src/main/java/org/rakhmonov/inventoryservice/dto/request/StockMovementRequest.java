@@ -4,7 +4,6 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 import org.rakhmonov.inventoryservice.entity.Product;
 import org.rakhmonov.inventoryservice.entity.StockMovement;
-import org.rakhmonov.inventoryservice.entity.Warehouse;
 
 import java.math.BigDecimal;
 
@@ -38,10 +37,10 @@ public class StockMovementRequest {
 
     private String createdBy;
 
-    public static StockMovement toEntity(StockMovementRequest request, Product product, Warehouse warehouse) {
+    public static StockMovement toEntity(StockMovementRequest request, Product product) {
         return StockMovement.builder()
                 .product(product)
-                .warehouse(warehouse)
+                .warehouseId(request.getWarehouseId())
                 .movementType(request.getMovementType())
                 .quantity(request.getQuantity())
                 .unitCost(request.getUnitCost())

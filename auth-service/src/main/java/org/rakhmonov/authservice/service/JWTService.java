@@ -7,6 +7,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
 import lombok.RequiredArgsConstructor;
+import org.rakhmonov.authservice.entity.User;
 import org.rakhmonov.authservice.repo.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -70,6 +71,20 @@ public class JWTService {
                 .collect(Collectors.toList());
         
         claims.put("authorities", authorities);
+        
+        // Get userId from userDetails (User entity implements UserDetails)
+        if (userDetails instanceof User) {
+            User user = (User) userDetails;
+            claims.put("userId", user.getId());
+        } else {
+            // Fallback: get userId from phoneNumber
+            User user = userRepository.findByPhoneNumber(userDetails.getUsername())
+                    .orElse(null);
+            if (user != null) {
+                claims.put("userId", user.getId());
+            }
+        }
+        
         return generateToken(claims, userDetails);
     }
 

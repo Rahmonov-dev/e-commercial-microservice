@@ -26,25 +26,7 @@ public class RoleController {
 
     @PostMapping
 //    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @Operation(
-        summary = "Create new role",
-        description = "Creates a new role with specified permissions (Super Admin only)"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Role created successfully",
-            content = @Content(schema = @Schema(implementation = RoleResponse.class))
-        ),
-        @ApiResponse(
-            responseCode = "400",
-            description = "Invalid request data"
-        ),
-        @ApiResponse(
-            responseCode = "403",
-            description = "Access denied - Super Admin privileges required"
-        )
-    })
+
     public ResponseEntity<RoleResponse> createRole(
         @Parameter(description = "Role creation details", required = true)
         @RequestBody RoleRequest roleRequest
@@ -55,29 +37,6 @@ public class RoleController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @Operation(
-        summary = "Update existing role",
-        description = "Updates an existing role with new details (Super Admin only)"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Role updated successfully",
-            content = @Content(schema = @Schema(implementation = RoleResponse.class))
-        ),
-        @ApiResponse(
-            responseCode = "400",
-            description = "Invalid request data"
-        ),
-        @ApiResponse(
-            responseCode = "403",
-            description = "Access denied - Super Admin privileges required"
-        ),
-        @ApiResponse(
-            responseCode = "404",
-            description = "Role not found"
-        )
-    })
     public ResponseEntity<RoleResponse> updateRole(
         @Parameter(description = "Role ID to update", required = true)
         @PathVariable Long id,
@@ -90,24 +49,6 @@ public class RoleController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @Operation(
-        summary = "Delete role",
-        description = "Soft deletes a role (Super Admin only)"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Role deleted successfully"
-        ),
-        @ApiResponse(
-            responseCode = "403",
-            description = "Access denied - Super Admin privileges required"
-        ),
-        @ApiResponse(
-            responseCode = "404",
-            description = "Role not found"
-        )
-    })
     public ResponseEntity<String> deleteRole(
         @Parameter(description = "Role ID to delete", required = true)
         @PathVariable Long id
@@ -118,25 +59,6 @@ public class RoleController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    @Operation(
-        summary = "Get role by ID",
-        description = "Retrieves role details by role ID (Admin/Super Admin only)"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Role found successfully",
-            content = @Content(schema = @Schema(implementation = RoleResponse.class))
-        ),
-        @ApiResponse(
-            responseCode = "404",
-            description = "Role not found"
-        ),
-        @ApiResponse(
-            responseCode = "403",
-            description = "Access denied - insufficient privileges"
-        )
-    })
     public ResponseEntity<RoleResponse> getRole(
         @Parameter(description = "Role ID to retrieve", required = true)
         @PathVariable Long id
@@ -147,21 +69,6 @@ public class RoleController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    @Operation(
-        summary = "Get all roles",
-        description = "Retrieves list of all roles including deleted ones (Admin/Super Admin only)"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Roles retrieved successfully",
-            content = @Content(schema = @Schema(implementation = RoleResponse.class))
-        ),
-        @ApiResponse(
-            responseCode = "403",
-            description = "Access denied - insufficient privileges"
-        )
-    })
     public ResponseEntity<List<RoleResponse>> getAllRoles() {
         List<RoleResponse> roles = roleService.getAllRoles();
         return ResponseEntity.ok(roles);
@@ -169,21 +76,6 @@ public class RoleController {
 
     @GetMapping("/active")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    @Operation(
-        summary = "Get active roles",
-        description = "Retrieves list of only active (non-deleted) roles (Admin/Super Admin only)"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Active roles retrieved successfully",
-            content = @Content(schema = @Schema(implementation = RoleResponse.class))
-        ),
-        @ApiResponse(
-            responseCode = "403",
-            description = "Access denied - insufficient privileges"
-        )
-    })
     public ResponseEntity<List<RoleResponse>> getActiveRoles() {
         List<RoleResponse> roles = roleService.getActiveRoles();
         return ResponseEntity.ok(roles);

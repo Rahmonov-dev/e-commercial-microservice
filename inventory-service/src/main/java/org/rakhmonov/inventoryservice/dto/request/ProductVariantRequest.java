@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 
@@ -43,8 +44,7 @@ public class ProductVariantRequest {
     @Size(max = 50, message = "Dimensions cannot exceed 50 characters")
     private String dimensions; // "LxWxH" format
     
-    @Size(max = 500, message = "Image URL cannot exceed 500 characters")
-    private String imageUrl; // Specific image for this variant
+    private MultipartFile imageUrl; // Specific image for this variant
     
     @Min(value = 0, message = "Stock quantity cannot be negative")
     private Integer stockQuantity;

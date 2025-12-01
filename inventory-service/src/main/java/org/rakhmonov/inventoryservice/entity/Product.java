@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"category", "inventory", "thirdPartySeller", "supplier"})
+@ToString(exclude = {"category", "inventory"})
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,6 +38,10 @@ public class Product {
     @Builder.Default
     private Boolean isActive = true;
     
+    @Builder.Default
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
+    
     // Relationships
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
@@ -46,13 +50,12 @@ public class Product {
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Inventory inventory;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "third_party_seller_id")
-    private ThirdPartySeller thirdPartySeller;
+    // Foreign keys to other services (microservice pattern)
+    @Column(name = "third_party_seller_id")
+    private Long thirdPartySellerId; // Reference to User Service
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "supplier_id")
-    private Supplier supplier;
+    @Column(name = "supplier_id")
+    private Long supplierId; // Reference to User Service
     
     // Timestamps
     @CreationTimestamp

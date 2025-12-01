@@ -1,5 +1,7 @@
 package org.rakhmonov.inventoryservice.exception;
 
+import io.swagger.v3.oas.annotations.Hidden;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -41,12 +43,12 @@ public class GlobalExceptionHandler {
         Map<String, String> error = new HashMap<>();
         error.put("error", "Validation Failed");
         error.put("message", "Invalid input data");
-        
+
         // Add field-specific errors
-        ex.getBindingResult().getFieldErrors().forEach(fieldError -> 
+        ex.getBindingResult().getFieldErrors().forEach(fieldError ->
             error.put(fieldError.getField(), fieldError.getDefaultMessage())
         );
-        
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 

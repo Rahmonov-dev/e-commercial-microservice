@@ -1,9 +1,12 @@
 package org.rakhmonov.inventoryservice.repo;
 
+// Note: Supplier entity is in a different microservice (user-service)
+// This repository is kept for potential future use
+// Uncomment and modify when Supplier entity is available
+/*
 import org.rakhmonov.inventoryservice.entity.Supplier;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -39,3 +42,4 @@ public interface SupplierRepository extends JpaRepository<Supplier, Long> {
             @Param("minCredit") BigDecimal minCredit
     );
 }
+*/

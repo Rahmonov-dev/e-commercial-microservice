@@ -3,8 +3,6 @@ package org.rakhmonov.inventoryservice.dto.request;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Data;
-import org.rakhmonov.inventoryservice.entity.Supplier;
 
 import java.math.BigDecimal;
 
@@ -35,33 +33,14 @@ public class SupplierRequestDto {
     private String bankAccount;
     private String paymentMethod;
     private String notes;
+    // Note: Supplier entity is in a different microservice (user-service)
+    // This method is kept for potential future use or REST communication
+    // Uncomment and modify when Supplier entity is available
+    /*
     public static Supplier toEntity(SupplierRequestDto dto) {
         if (dto == null) return null;
-
-        return Supplier.builder()
-                .companyName(dto.getCompanyName())
-                .contactPerson(dto.getContactPerson())
-                .email(dto.getEmail())
-                .phone(dto.getPhone())
-                .address(dto.getAddress())
-                .city(dto.getCity())
-                .state(dto.getState())
-                .country(dto.getCountry())
-                .postalCode(dto.getPostalCode())
-                .website(dto.getWebsite())
-                .supplierType(dto.getSupplierType() != null
-                        ? Supplier.SupplierType.valueOf(dto.getSupplierType())
-                        : Supplier.SupplierType.MANUFACTURER)
-                .status(dto.getStatus() != null
-                        ? Supplier.SupplierStatus.valueOf(dto.getStatus())
-                        : Supplier.SupplierStatus.ACTIVE)
-                .paymentTerms(dto.getPaymentTerms())
-                .creditLimit(dto.getCreditLimit())
-                .minimumOrderAmount(dto.getMinimumOrderAmount())
-                .leadTimeDays(dto.getLeadTimeDays() != null ? dto.getLeadTimeDays() : 7)
-                .bankAccount(dto.getBankAccount())
-                .paymentMethod(dto.getPaymentMethod())
-                .notes(dto.getNotes())
-                .build();
+        // Implementation removed - Supplier entity not in this service
+        return null;
     }
+    */
 }

@@ -6,27 +6,28 @@ import lombok.NoArgsConstructor;
 import org.rakhmonov.orderservice.entity.Order;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderStatusChangedEvent {
     
-    private Long orderId;
     private String orderNumber;
-    private Long userId;
     private Order.OrderStatus oldStatus;
     private Order.OrderStatus newStatus;
     private LocalDateTime changedAt;
+    private List<OrderItemEvent> orderItems;
     
-    public OrderStatusChangedEvent(Long orderId, String orderNumber, Long userId, 
-                                 Order.OrderStatus oldStatus, Order.OrderStatus newStatus) {
-        this.orderId = orderId;
+    public OrderStatusChangedEvent(String orderNumber,
+                                 Order.OrderStatus oldStatus, Order.OrderStatus newStatus,
+                                 List<OrderItemEvent> orderItems) {
         this.orderNumber = orderNumber;
-        this.userId = userId;
         this.oldStatus = oldStatus;
         this.newStatus = newStatus;
         this.changedAt = LocalDateTime.now();
+        this.orderItems = orderItems;
     }
 }
 

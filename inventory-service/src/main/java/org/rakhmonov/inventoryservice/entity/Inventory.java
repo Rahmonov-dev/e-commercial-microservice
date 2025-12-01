@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "inventory", schema = "public")
 @Data
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -35,9 +36,8 @@ public class Inventory {
     @JoinColumn(name = "product_id")
     private Product product;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "warehouse_id")
-    private Warehouse warehouse;
+    @Column(name = "warehouse_id", nullable = false)
+    private Long warehouseId; // Reference to Warehouse Service
     
     // Timestamps
     @CreationTimestamp
@@ -46,6 +46,16 @@ public class Inventory {
     
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+    
+    @Builder.Default
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
+    
+    // Explicit setter for isDeleted (Lombok sometimes has issues with Boolean is* fields)
+
+    public void setIsDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
     
     // Business logic methods
     public String getStockStatus() {

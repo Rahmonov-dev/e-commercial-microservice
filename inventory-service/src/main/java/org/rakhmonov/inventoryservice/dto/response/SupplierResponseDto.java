@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.rakhmonov.inventoryservice.entity.Supplier;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -52,39 +51,14 @@ public class SupplierResponseDto {
     private Double successRate;
     private Double cancellationRate;
 
+    // Note: Supplier entity is in a different microservice (user-service)
+    // This method is kept for potential future use or REST communication
+    // Uncomment and modify when Supplier entity is available
+    /*
     public static SupplierResponseDto fromEntity(Supplier supplier) {
         if (supplier == null) return null;
-
-        return SupplierResponseDto.builder()
-                .id(supplier.getId())
-                .companyName(supplier.getCompanyName())
-                .contactPerson(supplier.getContactPerson())
-                .email(supplier.getEmail())
-                .phone(supplier.getPhone())
-                .address(supplier.getAddress())
-                .city(supplier.getCity())
-                .state(supplier.getState())
-                .country(supplier.getCountry())
-                .postalCode(supplier.getPostalCode())
-                .website(supplier.getWebsite())
-                .supplierType(supplier.getSupplierType().name())
-                .status(supplier.getStatus().name())
-                .paymentTerms(supplier.getPaymentTerms())
-                .creditLimit(supplier.getCreditLimit())
-                .currentBalance(supplier.getCurrentBalance())
-                .minimumOrderAmount(supplier.getMinimumOrderAmount())
-                .leadTimeDays(supplier.getLeadTimeDays())
-                .totalOrders(supplier.getTotalOrders())
-                .successfulOrders(supplier.getSuccessfulOrders())
-                .cancelledOrders(supplier.getCancelledOrders())
-                .totalPurchases(supplier.getTotalPurchases())
-                .bankAccount(supplier.getBankAccount())
-                .paymentMethod(supplier.getPaymentMethod())
-                .notes(supplier.getNotes())
-                .createdAt(supplier.getCreatedAt())
-                .updatedAt(supplier.getUpdatedAt())
-                .successRate(supplier.getSuccessRate())
-                .cancellationRate(supplier.getCancellationRate())
-                .build();
+        // Implementation removed - Supplier entity not in this service
+        return null;
     }
+    */
 }

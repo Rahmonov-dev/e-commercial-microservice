@@ -126,4 +126,18 @@ public class UserService {
                 .map(UserResponse::fromEntity)
                 .collect(Collectors.toList());
     }
+
+    public UserResponse becomeSeller(Long userId) {
+        User user = userRepository.findByIdAndIsDeletedFalse(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        // Find SELLER role
+        Role sellerRole = roleRepository.findByNameAndIsDeletedFalse("SELLER")
+                .orElseThrow(() -> new RuntimeException("SELLER role not found"));
+        
+        user.setRole(sellerRole);
+        
+        User savedUser = userRepository.save(user);
+        return UserResponse.fromEntity(savedUser);
+    }
 }

@@ -19,7 +19,6 @@ import java.util.Optional;
 public class StockMovementService {
     private final StockMovementRepository stockMovementRepository;
     private final ProductRepository productRepository;
-    private final WarehouseRepository warehouseRepository;
     private final InventoryRepository inventoryRepository;
 
     @Transactional
@@ -27,25 +26,22 @@ public class StockMovementService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + request.getProductId()));
 
-        Warehouse warehouse = null;
-        if (request.getWarehouseId() != null) {
-            warehouse = warehouseRepository.findById(request.getWarehouseId())
-                    .orElseThrow(() -> new RuntimeException("Warehouse not found with id: " + request.getWarehouseId()));
-        }
+        // Warehouse ID is validated but not fetched since it's in a different service
+        Long warehouseId = request.getWarehouseId();
 
         // Get current stock level for the product
-        Integer currentStock = getCurrentStockLevel(product, warehouse);
+        Integer currentStock = getCurrentStockLevel(product, warehouseId);
         Integer newStockLevel = calculateNewStockLevel(currentStock, request.getQuantity(), request.getMovementType());
 
-        StockMovement stockMovement = StockMovementRequest.toEntity(request, product, warehouse);
+        StockMovement stockMovement = StockMovementRequest.toEntity(request, product);
         stockMovement.setStockBefore(currentStock);
         stockMovement.setStockAfter(newStockLevel);
 
         StockMovement savedMovement = stockMovementRepository.save(stockMovement);
 
         // Update inventory if warehouse is specified
-        if (warehouse != null) {
-            updateInventoryStock(product, warehouse, newStockLevel);
+        if (warehouseId != null) {
+            updateInventoryStock(product, warehouseId, newStockLevel);
         }
 
         log.info("Stock movement created: {} {} units for product {} ({} -> {})", 
@@ -129,10 +125,10 @@ public class StockMovementService {
     }
 
     // Helper methods
-    private Integer getCurrentStockLevel(Product product, Warehouse warehouse) {
-        if (warehouse != null) {
+    private Integer getCurrentStockLevel(Product product, Long warehouseId) {
+        if (warehouseId != null) {
             // Get stock from specific warehouse
-            return inventoryRepository.findByProductAndWarehouse(product, warehouse)
+            return inventoryRepository.findByProductIdAndWarehouseId(product.getId(), warehouseId)
                     .map(Inventory::getCurrentStock)
                     .orElse(0);
         } else {
@@ -154,8 +150,8 @@ public class StockMovementService {
         }
     }
 
-    private void updateInventoryStock(Product product, Warehouse warehouse, Integer newStockLevel) {
-        Optional<Inventory> inventoryOpt = inventoryRepository.findByProductAndWarehouse(product, warehouse);
+    private void updateInventoryStock(Product product, Long warehouseId, Integer newStockLevel) {
+        Optional<Inventory> inventoryOpt = inventoryRepository.findByProductIdAndWarehouseId(product.getId(), warehouseId);
         
         if (inventoryOpt.isPresent()) {
             Inventory inventory = inventoryOpt.get();
@@ -165,7 +161,7 @@ public class StockMovementService {
             // Create new inventory record if it doesn't exist
             Inventory newInventory = Inventory.builder()
                     .product(product)
-                    .warehouse(warehouse)
+                    .warehouseId(warehouseId)
                     .currentStock(newStockLevel)
                     .reorderPoint(10) // Default reorder point
                     .build();
@@ -175,13 +171,13 @@ public class StockMovementService {
 
     private void reverseStockMovement(StockMovement movement) {
         Product product = movement.getProduct();
-        Warehouse warehouse = movement.getWarehouse();
+        Long warehouseId = movement.getWarehouseId();
         
-        if (warehouse != null) {
-            Integer currentStock = getCurrentStockLevel(product, warehouse);
+        if (warehouseId != null) {
+            Integer currentStock = getCurrentStockLevel(product, warehouseId);
             Integer reversedStock = calculateNewStockLevel(currentStock, movement.getQuantity(), 
                     getReversedMovementType(movement.getMovementType()));
-            updateInventoryStock(product, warehouse, reversedStock);
+            updateInventoryStock(product, warehouseId, reversedStock);
         }
     }
 
@@ -193,7 +189,7 @@ public class StockMovementService {
             case TRANSFER_OUT -> StockMovement.MovementType.TRANSFER_IN;
             case RESERVED -> StockMovement.MovementType.RELEASED;
             case RELEASED -> StockMovement.MovementType.RESERVED;
-            case ADJUSTMENT -> StockMovement.MovementType.ADJUSTMENT; // Keep as adjustment
+            case ADJUSTMENT -> StockMovement.MovementType.ADJUSTMENT;
         };
     }
 }

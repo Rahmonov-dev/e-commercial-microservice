@@ -26,7 +26,7 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
     
     List<StockMovement> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
     
-    @Query("SELECT sm FROM StockMovement sm WHERE sm.product.id = :productId AND sm.warehouse.id = :warehouseId")
+    @Query("SELECT sm FROM StockMovement sm WHERE sm.product.id = :productId AND sm.warehouseId = :warehouseId")
     List<StockMovement> findByProductIdAndWarehouseId(@Param("productId") Long productId, @Param("warehouseId") Long warehouseId);
     
     @Query("SELECT sm FROM StockMovement sm WHERE sm.movementType = :movementType AND sm.createdAt BETWEEN :startDate AND :endDate")

@@ -35,10 +35,10 @@ public class PermissionController {
     }
 
     @PostMapping
-//    @PreAuthorize("hasRole('SUPER_ADMIN')")
+//    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Create new permission",
-        description = "Creates a new permission with specified resource and action (Super Admin only)"
+        description = "Creates a new permission with specified resource and action (Admin only)"
     )
     @ApiResponses(value = {
         @ApiResponse(

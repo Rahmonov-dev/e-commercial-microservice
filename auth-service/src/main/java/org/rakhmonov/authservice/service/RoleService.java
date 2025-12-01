@@ -33,7 +33,6 @@ public class RoleService {
         // Save the role first to get the ID
         Role saved = roleRepository.save(role);
         
-        // If permissionIds are provided, assign them to the role
         if (roleRequest.getPermissionIds() != null && !roleRequest.getPermissionIds().isEmpty()) {
             List<Permission> permissions = permissionRepository.findAllById(roleRequest.getPermissionIds());
             if (permissions.size() != roleRequest.getPermissionIds().size()) {

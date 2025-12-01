@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"product", "warehouse"})
+@ToString(exclude = {"product"})
 public class StockMovement {
     
     @Id
@@ -27,9 +27,8 @@ public class StockMovement {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "warehouse_id")
-    private Warehouse warehouse;
+    @Column(name = "warehouse_id")
+    private Long warehouseId;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "movement_type", nullable = false)

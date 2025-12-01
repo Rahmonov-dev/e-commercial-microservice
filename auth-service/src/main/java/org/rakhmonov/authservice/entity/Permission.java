@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString // No circular reference since we removed the roles field
+@ToString
 public class Permission implements GrantedAuthority {
 
     @Id
@@ -53,17 +53,11 @@ public class Permission implements GrantedAuthority {
     @Column(name = "deleted_by", length = 100)
     private String deletedBy;
 
-    // Removed reverse relationship to prevent circular reference
-    // @ManyToMany(mappedBy = "permissions", fetch = FetchType.EAGER)
-    // private List<Role> roles;
-
-    // Spring Security GrantedAuthority implementation
     @Override
     public String getAuthority() {
         return this.name;
     }
 
-    // Pre-persist and pre-update methods
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

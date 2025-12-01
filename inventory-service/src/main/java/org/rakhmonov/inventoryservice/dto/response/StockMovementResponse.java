@@ -38,8 +38,8 @@ public class StockMovementResponse {
                 .id(entity.getId())
                 .productId(entity.getProduct() != null ? entity.getProduct().getId() : null)
                 .productName(entity.getProduct() != null ? entity.getProduct().getName() : null)
-                .warehouseId(entity.getWarehouse() != null ? entity.getWarehouse().getId() : null)
-                .warehouseName(entity.getWarehouse() != null ? entity.getWarehouse().getName() : null)
+                .warehouseId(entity.getWarehouseId())
+                .warehouseName(null) // Can be fetched from warehouse-service via REST call if needed
                 .movementType(entity.getMovementType())
                 .quantity(entity.getQuantity())
                 .unitCost(entity.getUnitCost())

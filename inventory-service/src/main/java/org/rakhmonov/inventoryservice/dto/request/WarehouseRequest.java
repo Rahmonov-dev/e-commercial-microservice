@@ -1,7 +1,6 @@
 package org.rakhmonov.inventoryservice.dto.request;
 
 import lombok.*;
-import org.rakhmonov.inventoryservice.entity.Warehouse;
 
 @Data
 @Builder
@@ -16,63 +15,22 @@ public class WarehouseRequest {
     private String contactPerson;
     private String phone;
     private String email;
-    private String status;   // Enum nomi sifatida yuboriladi (ACTIVE, INACTIVE, ...)
-    private String type;     // Enum nomi sifatida yuboriladi (MAIN, DISTRIBUTION, ...)
-    private Boolean isActive;
     private Integer capacitySquareMeters;
     private String operatingHours;
-    private String timezone;
 
+    // Note: Warehouse entity is in a different microservice (warehouse-service or user-service)
+    // These methods are kept for potential future use or REST communication
+    // Uncomment and modify when Warehouse entity is available
+    /*
     public static Warehouse toEntity(WarehouseRequest dto) {
         if (dto == null) return null;
-
-        Warehouse entity = new Warehouse();
-        entity.setWarehouseCode(dto.getWarehouseCode());
-        entity.setName(dto.getName());
-        entity.setDescription(dto.getDescription());
-        entity.setAddress(dto.getAddress());
-        entity.setCity(dto.getCity());
-        entity.setContactPerson(dto.getContactPerson());
-        entity.setPhone(dto.getPhone());
-        entity.setEmail(dto.getEmail());
-
-        if (dto.getStatus() != null) {
-            entity.setStatus(Warehouse.WarehouseStatus.valueOf(dto.getStatus()));
-        }
-        if (dto.getType() != null) {
-            entity.setType(Warehouse.WarehouseType.valueOf(dto.getType()));
-        }
-
-        entity.setIsActive(dto.getIsActive());
-        entity.setCapacitySquareMeters(dto.getCapacitySquareMeters());
-        entity.setOperatingHours(dto.getOperatingHours());
-        entity.setTimezone(dto.getTimezone());
-
-        return entity;
+        // Implementation removed - Warehouse entity not in this service
+        return null;
     }
     public static void updateEntity(WarehouseRequest dto, Warehouse entity) {
         if (dto == null || entity == null) return;
-
-        entity.setWarehouseCode(dto.getWarehouseCode());
-        entity.setName(dto.getName());
-        entity.setDescription(dto.getDescription());
-        entity.setAddress(dto.getAddress());
-        entity.setCity(dto.getCity());
-        entity.setContactPerson(dto.getContactPerson());
-        entity.setPhone(dto.getPhone());
-        entity.setEmail(dto.getEmail());
-
-        if (dto.getStatus() != null) {
-            entity.setStatus(Warehouse.WarehouseStatus.valueOf(dto.getStatus()));
-        }
-        if (dto.getType() != null) {
-            entity.setType(Warehouse.WarehouseType.valueOf(dto.getType()));
-        }
-
-        entity.setIsActive(dto.getIsActive());
-        entity.setCapacitySquareMeters(dto.getCapacitySquareMeters());
-        entity.setOperatingHours(dto.getOperatingHours());
-        entity.setTimezone(dto.getTimezone());
+        // Implementation removed - Warehouse entity not in this service
     }
+    */
 
 }

@@ -31,7 +31,7 @@ public class InventoryResponse {
                 .unitCost(entity.getUnitCost())
                 .stockStatus(entity.getStockStatus())
                 .productId(entity.getProduct() != null ? entity.getProduct().getId() : null)
-                .warehouseId(entity.getWarehouse() != null ? entity.getWarehouse().getId() : null)
+                .warehouseId(entity.getWarehouseId())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();

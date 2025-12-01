@@ -10,6 +10,7 @@ import org.rakhmonov.inventoryservice.service.StockMovementService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -85,6 +86,7 @@ public class StockMovementController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteStockMovement(@PathVariable Long id) {
         stockMovementService.deleteStockMovement(id);
         return ResponseEntity.noContent().build();

@@ -21,7 +21,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"role"}) // Exclude role from toString to prevent circular reference
+@ToString(exclude = {"role"})
 public class User implements UserDetails {
     
     @Id
@@ -44,7 +44,7 @@ public class User implements UserDetails {
     
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
-    @JsonIgnoreProperties({"permissions"}) // Prevent circular reference
+    @JsonIgnoreProperties({"permissions"})
     private Role role;
     
     @Enumerated(EnumType.STRING)
@@ -63,16 +63,17 @@ public class User implements UserDetails {
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    
-    // UserDetails implementation
+    public User(String email, String firstName, String lastName) {
+        this.email = email;
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new java.util.ArrayList<>();
-        
-        // Add role authority
         authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName().toUpperCase()));
-        
-        // Add permission authorities
         if (role != null && role.getPermissions() != null) {
             authorities.addAll(
                     role.getPermissions().stream()

@@ -10,6 +10,7 @@ import org.rakhmonov.orderservice.service.CartItemService;
 import org.rakhmonov.orderservice.service.CartService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -53,18 +54,19 @@ public class CartController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCart(@PathVariable Long id) {
         cartService.deleteCart(id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/user/{userId}/clear")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> clearCart(@PathVariable Long userId) {
         cartService.clearCart(userId);
         return ResponseEntity.noContent().build();
     }
 
-    // Cart Item endpoints
     @PostMapping("/items")
     public ResponseEntity<CartItemResponse> addItemToCart(@Valid @RequestBody CartRequest cartRequest) {
         CartItemResponse cartItem = cartItemService.addItemToCart(cartRequest);
@@ -103,24 +105,28 @@ public class CartController {
     }
 
     @DeleteMapping("/items/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> removeItemFromCart(@PathVariable Long id) {
         cartItemService.removeItemFromCart(id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{cartId}/items/product/{productId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> removeItemFromCartByProduct(@PathVariable Long cartId, @PathVariable Long productId) {
         cartItemService.removeItemFromCartByProduct(cartId, productId);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{cartId}/items/clear")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> clearCartItems(@PathVariable Long cartId) {
         cartItemService.clearCartItems(cartId);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/user/{userId}/items/clear")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> clearCartItemsByUserId(@PathVariable Long userId) {
         CartResponse cart = cartService.getCartByUserId(userId);
         cartItemService.clearCartItems(cart.getId());

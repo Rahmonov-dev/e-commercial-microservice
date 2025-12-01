@@ -32,8 +32,6 @@ public class CartItemService {
                     Cart newCart = Cart.builder()
                             .userId(cartRequest.getUserId())
                             .totalAmount(BigDecimal.ZERO)
-                            .createdAt(LocalDateTime.now())
-                            .updatedAt(LocalDateTime.now())
                             .build();
                     return cartRepository.save(newCart);
                 });
@@ -47,7 +45,6 @@ public class CartItemService {
             cartItem = existingItem.get();
             cartItem.setQuantity(cartItem.getQuantity() + cartRequest.getQuantity());
             cartItem.setTotalAmount(cartItem.getUnitPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
-            cartItem.setUpdatedAt(LocalDateTime.now());
         } else {
             // Create new cart item
             BigDecimal itemTotal = cartRequest.getUnitPrice().multiply(BigDecimal.valueOf(cartRequest.getQuantity()));
@@ -58,8 +55,6 @@ public class CartItemService {
                     .quantity(cartRequest.getQuantity())
                     .unitPrice(cartRequest.getUnitPrice())
                     .totalAmount(itemTotal)
-                    .createdAt(LocalDateTime.now())
-                    .updatedAt(LocalDateTime.now())
                     .build();
         }
 
@@ -102,7 +97,6 @@ public class CartItemService {
         
         CartItem updatedItem = cartItemRepository.save(cartItem);
         
-        // Update cart total
         updateCartTotal(cartItem.getCart().getId());
         
         log.info("Cart item quantity updated to {} for item ID: {}", quantity, id);
@@ -117,7 +111,6 @@ public class CartItemService {
         Long cartId = cartItem.getCart().getId();
         cartItemRepository.delete(cartItem);
         
-        // Update cart total
         updateCartTotal(cartId);
         
         log.info("Cart item removed with ID: {}", id);
@@ -130,7 +123,6 @@ public class CartItemService {
         
         cartItemRepository.delete(cartItem);
         
-        // Update cart total
         updateCartTotal(cartId);
         
         log.info("Cart item removed for cart ID: {} and product ID: {}", cartId, productId);
@@ -141,7 +133,6 @@ public class CartItemService {
         List<CartItem> cartItems = cartItemRepository.findByCartId(cartId);
         cartItemRepository.deleteAll(cartItems);
         
-        // Update cart total to zero
         cartService.updateCartTotal(cartId, BigDecimal.ZERO);
         
         log.info("All cart items cleared for cart ID: {}", cartId);

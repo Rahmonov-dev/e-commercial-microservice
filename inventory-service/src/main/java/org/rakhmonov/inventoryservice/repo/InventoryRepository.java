@@ -3,7 +3,6 @@ package org.rakhmonov.inventoryservice.repo;
 import org.rakhmonov.inventoryservice.dto.response.InventoryResponse;
 import org.rakhmonov.inventoryservice.entity.Inventory;
 import org.rakhmonov.inventoryservice.entity.Product;
-import org.rakhmonov.inventoryservice.entity.Warehouse;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,13 +14,16 @@ import java.util.Optional;
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
-    @Query("SELECT i FROM Inventory i WHERE i.warehouse.id = :warehouseId AND i.product.id = :productId")
+    @Query("SELECT i FROM Inventory i WHERE i.warehouseId = :warehouseId AND i.product.id = :productId AND i.isDeleted = false")
     List<InventoryResponse> filterInventory(@Param("warehouseId") Long warehouseId,
                                             @Param("productId") Long productId);
     
-    Optional<Inventory> findByProductAndWarehouse(Product product, Warehouse warehouse);
+    @Query("SELECT i FROM Inventory i WHERE i.product.id = :productId AND i.warehouseId = :warehouseId AND i.isDeleted = false")
+    Optional<Inventory> findByProductIdAndWarehouseId(Long productId, Long warehouseId);
     
-    List<Inventory> findByProduct(Product product);
+    @Query("SELECT i FROM Inventory i WHERE i.product = :product AND i.isDeleted = false")
+    List<Inventory> findByProduct(@Param("product") Product product);
     
-    List<Inventory> findByWarehouse(Warehouse warehouse);
+    @Query("SELECT i FROM Inventory i WHERE i.warehouseId = :warehouseId AND i.isDeleted = false")
+    List<Inventory> findByWarehouseId(@Param("warehouseId") Long warehouseId);
 }

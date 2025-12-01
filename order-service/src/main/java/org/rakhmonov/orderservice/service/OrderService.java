@@ -7,8 +7,14 @@ import org.rakhmonov.orderservice.dto.response.OrderResponse;
 import org.rakhmonov.orderservice.entity.Order;
 import org.rakhmonov.orderservice.entity.OrderItem;
 import org.rakhmonov.orderservice.exception.OrderNotFoundException;
+import org.rakhmonov.orderservice.event.OrderCreatedEvent;
+import org.rakhmonov.orderservice.event.OrderEventPublisher;
+import org.rakhmonov.orderservice.event.OrderItemEvent;
+import org.rakhmonov.orderservice.event.OrderStatusChangedEvent;
 import org.rakhmonov.orderservice.repo.OrderRepository;
 import org.rakhmonov.orderservice.repo.OrderItemRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +22,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,18 +30,16 @@ import java.util.UUID;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final OrderEventPublisher orderEventPublisher;
 
     @Transactional
     public OrderResponse createOrder(OrderRequest orderRequest) {
-        // Generate unique order number
         String orderNumber = generateOrderNumber();
         
-        // Calculate total amount
         BigDecimal totalAmount = orderRequest.getOrderItems().stream()
                 .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Create order entity
         Order order = Order.builder()
                 .orderNumber(orderNumber)
                 .userId(orderRequest.getUserId())
@@ -49,7 +54,6 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        // Create order items
         List<OrderItem> orderItems = orderRequest.getOrderItems().stream()
                 .map(itemRequest -> {
                     BigDecimal itemTotal = itemRequest.getUnitPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
@@ -64,13 +68,25 @@ public class OrderService {
                             .updatedAt(LocalDateTime.now())
                             .build();
                 })
-                .toList();
+                .collect(Collectors.toList());
 
         orderItemRepository.saveAll(orderItems);
         savedOrder.setOrderItems(orderItems);
 
+        OrderResponse orderResponse = OrderResponse.fromEntity(savedOrder);
+        
+        List<OrderItemEvent> orderItemEvents = orderItems.stream()
+                .map(item -> new OrderItemEvent(item.getProductId(), item.getQuantity()))
+                .collect(Collectors.toList());
+        
+        OrderCreatedEvent orderCreatedEvent = new OrderCreatedEvent(
+                orderNumber,
+                orderItemEvents
+        );
+        orderEventPublisher.publishOrderCreated(orderCreatedEvent);
+        
         log.info("Order created successfully with order number: {}", orderNumber);
-        return OrderResponse.fromEntity(savedOrder);
+        return orderResponse;
     }
 
     public OrderResponse getOrderById(Long id) {
@@ -79,18 +95,14 @@ public class OrderService {
         return OrderResponse.fromEntity(order);
     }
 
-    public List<OrderResponse> getAllOrders() {
-        return orderRepository.findAll()
-                .stream()
-                .map(OrderResponse::fromEntity)
-                .toList();
+    public Page<OrderResponse> getAllOrders(Pageable pageable) {
+        return orderRepository.findByIsDeletedFalse(pageable)
+                .map(OrderResponse::fromEntity);
     }
 
-    public List<OrderResponse> getOrdersByUserId(Long userId) {
-        return orderRepository.findByUserId(userId)
-                .stream()
-                .map(OrderResponse::fromEntity)
-                .toList();
+    public Page<OrderResponse> getOrdersByUserId(Long userId, Pageable pageable) {
+        return orderRepository.findByUserIdAndIsDeletedFalse(userId, pageable)
+                .map(OrderResponse::fromEntity);
     }
 
     @Transactional
@@ -98,11 +110,29 @@ public class OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new OrderNotFoundException(id));
         
+        Order.OrderStatus oldStatus = order.getStatus();
         order.setStatus(status);
         order.setUpdatedAt(LocalDateTime.now());
         
         Order updatedOrder = orderRepository.save(order);
         log.info("Order status updated to {} for order ID: {}", status, id);
+        
+        // Publish OrderStatusChangedEvent to Kafka if status changed
+        if (oldStatus != status) {
+            // Create optimized event with only necessary data
+            List<OrderItemEvent> orderItemEvents = updatedOrder.getOrderItems() != null ?
+                    updatedOrder.getOrderItems().stream()
+                            .map(item -> new OrderItemEvent(item.getProductId(), item.getQuantity()))
+                            .collect(Collectors.toList()) : null;
+            
+            OrderStatusChangedEvent statusChangedEvent = new OrderStatusChangedEvent(
+                    updatedOrder.getOrderNumber(),
+                    oldStatus,
+                    status,
+                    orderItemEvents
+            );
+            orderEventPublisher.publishOrderStatusChanged(statusChangedEvent);
+        }
         
         return OrderResponse.fromEntity(updatedOrder);
     }
@@ -115,7 +145,6 @@ public class OrderService {
         order.setPaymentStatus(paymentStatus);
         order.setUpdatedAt(LocalDateTime.now());
         
-        // If payment is successful, update order status to confirmed
         if (paymentStatus == Order.PaymentStatus.PAID && order.getStatus() == Order.OrderStatus.PENDING) {
             order.setStatus(Order.OrderStatus.CONFIRMED);
         }
@@ -146,25 +175,19 @@ public class OrderService {
         return OrderResponse.fromEntity(order);
     }
 
-    public List<OrderResponse> getOrdersByStatus(Order.OrderStatus status) {
-        return orderRepository.findByStatus(status)
-                .stream()
-                .map(OrderResponse::fromEntity)
-                .toList();
+    public Page<OrderResponse> getOrdersByStatus(Order.OrderStatus status, Pageable pageable) {
+        return orderRepository.findByStatusAndIsDeletedFalse(status, pageable)
+                .map(OrderResponse::fromEntity);
     }
 
-    public List<OrderResponse> getOrdersByPaymentStatus(Order.PaymentStatus paymentStatus) {
-        return orderRepository.findByPaymentStatus(paymentStatus)
-                .stream()
-                .map(OrderResponse::fromEntity)
-                .toList();
+    public Page<OrderResponse> getOrdersByPaymentStatus(Order.PaymentStatus paymentStatus, Pageable pageable) {
+        return orderRepository.findByPaymentStatus(paymentStatus, pageable)
+                .map(OrderResponse::fromEntity);
     }
 
-    public List<OrderResponse> getOrdersByUserIdAndStatus(Long userId, Order.OrderStatus status) {
-        return orderRepository.findByUserIdAndStatus(userId, status)
-                .stream()
-                .map(OrderResponse::fromEntity)
-                .toList();
+    public Page<OrderResponse> getOrdersByUserIdAndStatus(Long userId, Order.OrderStatus status, Pageable pageable) {
+        return orderRepository.findByUserIdAndStatus(userId, status, pageable)
+                .map(OrderResponse::fromEntity);
     }
 
     private String generateOrderNumber() {

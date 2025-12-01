@@ -10,20 +10,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class JwtUtils {
-    
     public static String getCurrentUserRole() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
         if (authentication instanceof JwtAuthenticationToken jwtAuth) {
             Jwt jwt = jwtAuth.getToken();
             
-            // Try to get role from JWT claims
             Object roleClaim = jwt.getClaim("role");
             if (roleClaim != null) {
                 return roleClaim.toString();
             }
-            
-            // Fallback to authorities
             Collection<String> authorities = jwtAuth.getAuthorities().stream()
                     .map(auth -> auth.getAuthority())
                     .collect(Collectors.toList());
@@ -54,6 +50,30 @@ public class JwtUtils {
         if (authentication instanceof JwtAuthenticationToken jwtAuth) {
             Jwt jwt = jwtAuth.getToken();
             return jwt.getSubject(); // Usually contains user ID or phone number
+        }
+        
+        return null;
+    }
+    
+    public static Long getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+            Jwt jwt = jwtAuth.getToken();
+            Object userIdClaim = jwt.getClaim("userId");
+            if (userIdClaim != null) {
+                if (userIdClaim instanceof Long) {
+                    return (Long) userIdClaim;
+                } else if (userIdClaim instanceof Integer) {
+                    return ((Integer) userIdClaim).longValue();
+                } else if (userIdClaim instanceof String) {
+                    try {
+                        return Long.parseLong((String) userIdClaim);
+                    } catch (NumberFormatException e) {
+                        return null;
+                    }
+                }
+            }
         }
         
         return null;
